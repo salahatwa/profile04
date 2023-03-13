@@ -1,0 +1,79 @@
+protected PartyRel constructCustomerRepPartyRelation(final CustomerBasicInfo.RepresentativePersonalInfo representativeInfo, final Person person, final String surrogateKey) {
+        final PartyRel partyRel = new PartyRel();
+        final PartyRelate partyRelate = new PartyRelate();
+        partyRel.setPartyRelate(partyRelate);
+        String relation = RelationshipType.GUARDIAN_OF_MINOR.getCode();
+        if ("Y".equals(person.getIsChildWithSpecCrcmstnc()) || "Y".equals(person.getIsIncompotent()) || "Y".equals(person.getIsMentallyDisabled())) {
+            relation = RelationshipType.COURT_APPOINTED_GUARDIAN.getCode();
+        }
+        else if ("Y".equals(person.getIsIlleterate())) {
+            relation = RelationshipType.ILLITERATE_AND_BLIND_WITNESS.getCode();
+        }
+        else if ("Y".equals(person.getIsVeiledWomen())) {
+            relation = RelationshipType.VEILED_WOMAN_WITNESS.getCode();
+        }
+        partyRel.setPartyRelTypeCode(relation);
+        partyRel.setRecStatusCode(RecordStatus.ACTIVE.getCode());
+        if (StringUtils.isNotBlank(surrogateKey)) {
+            partyRel.setPartyRelId(surrogateKey);
+            partyRel.setOperation(OperationType.UPDATE.getCode());
+        }
+        else {
+            partyRel.setPartyRelId((String)null);
+            partyRel.setOperation(OperationType.INSERT.getCode());
+        }
+        partyRelate.setCustType(CustomerType.INDIVIDUAL.getCode());
+        if (StringUtils.isNotBlank(representativeInfo.getAlinmaId())) {
+            partyRelate.setAlinmaId(representativeInfo.getAlinmaId());
+        }
+        else {
+            partyRelate.setLegalEntity(representativeInfo.getLegalEntity());
+            partyRelate.setSubLegalEntity(representativeInfo.getSubLegalEntity());
+            partyRelate.setIdNumber(representativeInfo.getIdNumber());
+            partyRelate.setIdDocType(representativeInfo.getIdDocType());
+            if (Objects.nonNull(representativeInfo.getExpiryDate())) {
+                if (DateType.GREGORIAN.getCode().equals(representativeInfo.getExpiryDate().getDateType())) {
+                    partyRelate.setExpiryDate(representativeInfo.getExpiryDate().getDate());
+                }
+                else {
+                    partyRelate.setExpiryDateHjr(representativeInfo.getExpiryDate().getDate());
+                }
+            }
+            if (Objects.nonNull(representativeInfo.getBirthDate())) {
+                if (DateType.HIJRI.getCode().equals(representativeInfo.getBirthDate().getDateType())) {
+                    partyRelate.setBirthDateHjr(representativeInfo.getBirthDate().getDate());
+                }
+                else {
+                    partyRelate.setBirthDate(representativeInfo.getBirthDate().getDate());
+                }
+            }
+            partyRelate.setGender(representativeInfo.getGender());
+            partyRelate.setNationality(representativeInfo.getNationality());
+            if (StringUtils.isNotBlank(representativeInfo.getFullName())) {
+                final String[] nameParts = representativeInfo.getFullName().split(" ");
+                int index = 0;
+                for (final String part : nameParts) {
+                    if (index == 0) {
+                        partyRelate.setFirstName(part);
+                    }
+                    else if (index == 1) {
+                        partyRelate.setFatherName(part);
+                    }
+                    else if (index == 2) {
+                        partyRelate.setGrandfatherName(part);
+                    }
+                    else if (index == 3) {
+                        partyRelate.setFamilyName(part);
+                    }
+                    ++index;
+                }
+            }
+            partyRelate.setContactTypeCode(ContactType.HOME.getCode());
+            partyRelate.setRank("0");
+            final Mobile mobile = new Mobile();
+            mobile.setCountryCode(representativeInfo.getMobileCountryCode());
+            mobile.setNumber(representativeInfo.getMobileNumber());
+            partyRelate.setMobile(mobile);
+        }
+        return partyRel;
+    }
